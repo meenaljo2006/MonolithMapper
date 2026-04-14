@@ -26,7 +26,14 @@ export default function Dashboard() {
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
-  const [sysHealth, setSysHealth] = useState(null);
+  const [sysHealth, setSysHealth] = useState({
+    status: "loading",
+    qdrant: false,
+    llm: false,
+    vector_store: false,
+    active_sessions: 0,
+    version: "0.0.0"
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -44,9 +51,19 @@ export default function Dashboard() {
   const fetchHealth = async () => {
     try {
       const res = await fetch("https://monolith-mapper-653442272612.asia-south1.run.app/health");
-      setSysHealth(await res.json());
-    } catch (e) { console.error("Health check failed", e); }
+      const data = await res.json();
+      setSysHealth(data); // Poora data ek sath update ho jayega
+    } catch (e) {
+      console.error("System unreachable");
+      setStatus("error");
+    }
   };
+
+  useEffect(() => {
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 10000); // Live sync every 10s
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -146,7 +163,6 @@ export default function Dashboard() {
           <div className="workspace-view">
 
             {/* LIVE SYSTEM INSIGHTS */}
-            {/* ── CENTRAL TELEMETRY HUD (The Wow Factor) ── */}
             <div className="telemetry-hud">
               <div className="hud-pulse">
                 <div className={`pulse-core ${sysHealth?.status === 'ready' ? 'online' : 'offline'}`}></div>
@@ -183,11 +199,13 @@ export default function Dashboard() {
 
                 <div className="hud-divider"></div>
 
-                {/* USER VALUE: Token Usage */}
+                {/* USER VALUE: Active Sessions */}
                 <div className="hud-item">
-                  <span className="hud-label">MONTHLY TOKENS</span>
-                  <span className="hud-value" style={{ color: '#fff' }}>1.2M <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>/ 5M</span></span>
-                  <div className="progress-bar-mini"><div className="progress-fill" style={{ width: '24%' }}></div></div>
+                  <span className="hud-label">ACTIVE SESSIONS</span>
+                  <span className="hud-value" style={{ color: '#fff' }}>
+                    {sysHealth.active_sessions}
+                  </span>
+                  <span className="hud-sub">Live tracking across server</span>
                 </div>
               </div>
             </div>

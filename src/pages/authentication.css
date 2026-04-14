@@ -201,7 +201,7 @@ body {
 @keyframes dotPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
 .status-bar {
-  position: absolute; bottom: 24px; left: 48px; z-index: 10;
+  position: absolute; bottom: 28px; right: 80px; z-index: 10;
   display: flex; align-items: center; gap: 8px;
   font-family: var(--font-mono); font-size: 10px; color: rgba(160,160,171,.45);
   animation: fadeUp .6s ease both; animation-delay: .9s;

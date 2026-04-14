@@ -123,7 +123,7 @@ export default function ProjectIngestion({ project, onIngestionComplete }) {
           <label htmlFor="file-upload" className="file-label">
             <UploadCloud size={48} color={file ? "var(--cyan)" : "var(--text-3)"} />
             <span className="file-name">
-              {file ? file.name : "Drag & drop your .zip codebase here, or click to browse"}
+              {file ? file.name : "Click to browse and upload .zip codebase here"}
             </span>
           </label>
         </div>

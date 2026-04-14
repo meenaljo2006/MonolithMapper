@@ -55,7 +55,7 @@ function LeftPanel() {
       <ActivityStream />
 
       {/* Isometric SVG scene */}
-      <div style={{ position:"absolute", bottom:0, right:-20, width:440, height:420, zIndex:3, pointerEvents:"none" }}>
+      <div style={{ position:"absolute", bottom:30, left:-20, width:440, height:420, zIndex:3, pointerEvents:"none" }}>
         <svg viewBox="0 0 440 420" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
           <polygon points="80,290 220,220 360,290 220,360" fill="#1a1a1a" stroke="#2a2a2a" strokeWidth="1"/>
           <polygon points="80,290 80,310 220,380 220,360" fill="#111111" stroke="#222222" strokeWidth="1"/>
