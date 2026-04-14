@@ -129,7 +129,8 @@ function VisualPanel() {
 ───────────────────────────────────────────── */
 function LoginForm() {
   const navigate = useNavigate();
-  const [form, setForm]     = useState({ email:"", password:"" });
+  const [form, setForm]     = useState({ username:"", password:"" });
+  const [errors, setErrors] = useState({}); // Add this line
   const [showPw, setShowPw] = useState(false);
   const [status, setStatus] = useState("idle");
 
@@ -137,12 +138,44 @@ function LoginForm() {
     setForm(f => ({ ...f, [field]: e.target.value }));
   };
 
+  const API_BASE_URL = "https://monolith-mapper-653442272612.asia-south1.run.app";
+
   const handleSubmit = async () => {
-    if (!form.email || !form.password) return;
+    if (!form.username || !form.password) return;
     setStatus("loading");
-    await new Promise(r => setTimeout(r, 1500));
-    // Usually here you'd redirect to dashboard
-    navigate('/'); 
+    setErrors({}); // Clear previous errors
+    
+    try {
+      // 1. FastAPI strict requirement: Must be URLSearchParams, NOT JSON.
+      // OAuth2 technically expects the 'username' field, so we map the user's email to it.
+      const params = new URLSearchParams();
+      params.append('username', form.username); 
+      params.append('password', form.password);
+
+      // 2. Make the POST request
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+
+      const data = await response.json();
+
+      // 3. Handle invalid credentials
+      if (!response.ok) {
+        throw new Error(data.detail || "Invalid email or password");
+      }
+
+      // 4. Success! Store the token securely in local storage
+      localStorage.setItem('access_token', data.access_token);
+      
+      // 5. Navigate to the main dashboard
+      navigate('/dashboard'); 
+      
+    } catch (err) {
+      setErrors({ api: err.message });
+      setStatus("idle");
+    }
   };
 
   return (
@@ -165,25 +198,14 @@ function LoginForm() {
         <p>Don't have an account? <a href="/signup">Create one here</a></p>
       </div>
 
-      <div className="oauth-row">
-        <button className="oauth-btn" type="button">
-          <GitBranch size={16} /> GitHub
-        </button>
-        <button className="oauth-btn" type="button">
-          <Globe size={16} /> Google 
-        </button>
-      </div>
-
-      <div className="divider"><span>or continue with email</span></div>
-
       <div className="field">
-        <label htmlFor="email">Work email</label>
+        <label htmlFor="username">Username</label>
         <input
-          id="email"
-          type="email"
-          placeholder="ada@company.dev"
-          value={form.email}
-          onChange={handleChange("email")}
+          id="username"
+          type="text"
+          placeholder="ada_dev"
+          value={form.username}
+          onChange={handleChange("username")}
         />
       </div>
 
@@ -207,10 +229,16 @@ function LoginForm() {
         </div>
       </div>
 
+      {errors.api && (
+        <div className="field-error" style={{ marginBottom: 16, marginTop: 8, justifyContent: 'center' }}>
+          <AlertCircle size={14} /> {errors.api}
+        </div>
+      )}
+
       <button
         className="submit-btn"
         onClick={handleSubmit}
-        disabled={status === "loading" || !form.email || !form.password}
+        disabled={status === "loading" || !form.username || !form.password}
         type="button"
         style={{ marginTop: '24px' }}
       >

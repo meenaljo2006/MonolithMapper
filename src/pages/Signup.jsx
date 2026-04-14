@@ -4,10 +4,6 @@ import "./authentication.css"; // Cleanly imported CSS
 import { useNavigate } from "react-router-dom";
 
 /* ─────────────────────────────────────────────
-   LEFT PANEL — visual branding
-───────────────────────────────────────────── */
-
-/* ─────────────────────────────────────────────
    LIVE PIPELINE ACTIVITY (Meaningful Animation)
 ───────────────────────────────────────────── */
 const PIPELINE_LOGS = [
@@ -182,7 +178,7 @@ function PasswordStrength({ password }) {
    RIGHT PANEL — SIGNUP FORM
 ───────────────────────────────────────────── */
 function SignupForm() {
-  const [form, setForm]       = useState({ firstName:"", lastName:"", email:"", password:"", agreed: false });
+  const [form, setForm]       = useState({ firstName:"", lastName:"",username:"", email:"", password:"", agreed: false });
   const [errors, setErrors]   = useState({});
   const [showPw, setShowPw]   = useState(false);
   const [status, setStatus]   = useState("idle");
@@ -192,6 +188,7 @@ function SignupForm() {
     const e = {};
     if (!form.firstName.trim()) e.firstName = "Required";
     if (!form.lastName.trim())  e.lastName  = "Required";
+    if (!form.username.trim())  e.username  = "Required";
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       e.email = "Valid email required";
     if (!form.password || form.password.length < 8)
@@ -207,26 +204,85 @@ function SignupForm() {
     if (errors[field]) setErrors(er => { const n = {...er}; delete n[field]; return n; });
   };
 
+  // Add a base URL constant at the top of your component or file
+  const API_BASE_URL = "https://monolith-mapper-653442272612.asia-south1.run.app";
+
   const handleSubmit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
+    
     setStatus("loading");
-    await new Promise(r => setTimeout(r, 1600));
-    setStatus("success");
+    setErrors({});
+    
+    try {
+      // 1. Format the payload exactly as the API expects
+      const payload = {
+        username: form.username, 
+        full_name: `${form.firstName} ${form.lastName}`.trim(),
+        email: form.email,
+        password: form.password
+      };
+
+      // 2. Make the POST request
+      const response = await fetch(`${API_BASE_URL}/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      // 3. Handle backend errors (like email already exists)
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || "Failed to create account. Please try again.");
+      }
+
+      // 4. Success! Show the green checkmark screen
+      setStatus("success");
+      
+    } catch (err) {
+      setErrors({ api: err.message });
+      setStatus("idle");
+    }
   };
 
   if (status === "success") {
     return (
       <div className="success-screen">
-        <div className="check-ring">
-          <CheckCircle2 size={28} color="#00ffd1" />
+        <div className="animated-check-ring">
+          {/* Custom SVG for stroke drawing animation */}
+          <svg 
+            className="animated-check-svg" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="var(--cyan)" 
+            strokeWidth="3" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
         </div>
+        
         <h3>Account Created</h3>
-        <p>Welcome aboard, {form.firstName}. Check your inbox to verify your email before diving in.</p>
-        <div className="mono-note">→ {form.email}</div>
-        <button className="submit-btn" style={{ marginTop:8 }}
-          onClick={() => setStatus("idle")}>
-          Open Dashboard <ArrowRight size={16} />
+        <p>Welcome aboard, {form.firstName}. Your workspace has been allocated successfully.</p>
+        
+        {/* Displaying the newly generated username */}
+        <div className="mono-note">User: {form.username}</div>
+        
+        {errors.api && (
+          <div className="field-error" style={{ marginBottom: 16, justifyContent: 'center' }}>
+            <AlertCircle size={14} /> {errors.api}
+          </div>
+        )}
+        
+        {/* Navigates to Login as required by the API flow */}
+        <button 
+          className="submit-btn" 
+          style={{ marginTop: 24 }}
+          onClick={() => navigate('/login')}
+        >
+          Proceed to Login <ArrowRight size={16} />
         </button>
       </div>
     );
@@ -251,18 +307,6 @@ function SignupForm() {
         <h2>Create your workspace</h2>
         <p>Already have one? <a href="/login">Sign in instead</a></p>
       </div>
-
-      <div className="oauth-row">
-        <button className="oauth-btn" type="button">
-          <GitBranch size={16} /> GitHub
-        </button>
-        <button className="oauth-btn" type="button">
-          {/* Swapped Chrome for Globe to fix Vite Error */}
-          <Globe size={16} /> Google 
-        </button>
-      </div>
-
-      <div className="divider"><span>or continue with email</span></div>
 
       <div className="field-row">
         <div className="field">
@@ -291,6 +335,21 @@ function SignupForm() {
             <div className="field-error"><AlertCircle size={10} />{errors.lastName}</div>
           )}
         </div>
+      </div>
+
+      <div className="field">
+        <label htmlFor="username">Username</label>
+        <input
+          id="username"
+          type="text"
+          placeholder="ada_dev"
+          value={form.username}
+          onChange={handleChange("username")}
+          className={errors.username ? "error" : ""}
+        />
+        {errors.username && (
+          <div className="field-error"><AlertCircle size={10} />{errors.username}</div>
+        )}
       </div>
 
       <div className="field">
@@ -340,9 +399,18 @@ function SignupForm() {
           I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
         </label>
       </div>
-      {errors.agreed && (
-        <div className="field-error" style={{ marginBottom:12, marginTop:-8 }}>
-          <AlertCircle size={10} />{errors.agreed}
+
+      {/* Backend API Error Display */}
+      {errors.api && (
+        <div className="field-error" style={{ 
+          marginBottom: 16, 
+          marginTop: 0, 
+          paddingTop: '10px', 
+          paddingBottom:'10px',
+          borderRadius: '8px',
+        }}>
+          <AlertCircle size={14} /> 
+          <span style={{ marginLeft: '8px' }}>{errors.api}</span>
         </div>
       )}
 

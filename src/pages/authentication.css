@@ -358,7 +358,7 @@ body {
 /* terms */
 .terms-row {
   display: flex; align-items: flex-start; gap: 10px;
-  margin-bottom: 24px; margin-top: 4px;
+  margin-bottom: 10px; margin-top: 4px;
 }
 .terms-row input[type="checkbox"] {
   appearance: none; -webkit-appearance: none;
@@ -479,4 +479,44 @@ body {
   right: auto;
   left: 60px; /* Exactly wahi margin jahan tumhare logs start ho rahe hain */
   flex-direction: row; /* Isse wo chota sa blue dot wapas text ke left mein aa jayega */
+}
+
+/* ============================================
+   ANIMATED SUCCESS CHECKMARK
+============================================ */
+.animated-check-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 0 rgba(0, 255, 209, 0.4);
+  background: rgba(0, 255, 209, 0.05);
+  animation: pulse-ring 2s infinite cubic-bezier(0.66, 0, 0, 1);
+  margin-bottom: 8px;
+  border: 1px solid rgba(0, 255, 209, 0.2);
+}
+
+.animated-check-svg {
+  width: 32px;
+  height: 32px;
+  /* Total length of the checkmark path */
+  stroke-dasharray: 48; 
+  /* Hides the path initially */
+  stroke-dashoffset: 48; 
+  animation: draw-check 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+  animation-delay: 0.2s;
+}
+
+@keyframes pulse-ring {
+  to {
+    box-shadow: 0 0 0 24px rgba(0, 255, 209, 0);
+  }
+}
+
+@keyframes draw-check {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
